@@ -31,3 +31,18 @@ build/
 
 ### VS Code ###
 .vscode/
+
+target/
+*.log
+*.class
+
+# IntelliJ
+.idea/
+*.iml
+
+# VS Code
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
