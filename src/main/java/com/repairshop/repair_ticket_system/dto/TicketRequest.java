@@ -1,5 +1,6 @@
 package com.repairshop.repair_ticket_system.dto;
 
+import com.repairshop.repair_ticket_system.entity.ClientType;
 import lombok.Data;
 
 @Data
@@ -25,6 +26,14 @@ public class TicketRequest {
     // Service type
     private String serviceType;     // Diagnostic, Réparation, Montage, etc.
 
-    // Who is the client? (used when clerk creates ticket on behalf of a client)
-    private Long clientId;
+    // Client info (external person, not a system user)
+    private ClientType clientType;  // PARTICULIER or ENTREPRISE
+    private String clientName;
+    private String clientPhone;
+    private String clientEmail;
+    private String clientAddress;
+    private String clientCompany;
+
+    // Diagnostic notes (technician fills this after diagnosis)
+    private String diagnosticNotes;
 }

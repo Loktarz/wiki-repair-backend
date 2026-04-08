@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls *.zip)",
+      "Bash(mkdir -p thesis_src)",
+      "Bash(unzip -o \"403979320136__1_.zip\" -d thesis_src/)",
+      "Bash(mkdir \"C:\\\\Users\\\\yassi\\\\wiki-repair-frontend\\\\src\\\\pages\")",
+      "Bash(mkdir \"C:\\\\Users\\\\yassi\\\\wiki-repair-frontend\\\\src\\\\services\")",
+      "Bash(mkdir -p rapport_src)",
+      "Bash(unzip -o \"rapport.zip\" -d rapport_src/)",
+      "Bash(find 'C:\\\\Users\\\\yassi\\\\OneDrive\\\\Bureau\\\\repair-ticket-system - Copy/src/main/java' -type f -name *.java)",
+      "Bash(npm --version)",
+      "Read(//c/Users/yassi/OneDrive/Bureau/**)",
+      "Bash(npm create:*)",
+      "Bash(npm install:*)",
+      "Bash(npx tailwindcss:*)",
+      "WebFetch(domain:gsm-guide.tn)",
+      "Bash(git -C \"C:/Users/yassi/OneDrive/Bureau/repair-ticket-system - Copy\" remote -v)",
+      "Bash(git -C \"C:/Users/yassi/OneDrive/Bureau/repair-ticket-system - Copy\" log --oneline)"
+    ]
+  }
+}

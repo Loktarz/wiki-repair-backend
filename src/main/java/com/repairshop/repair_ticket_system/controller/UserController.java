@@ -15,7 +15,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:5173"})
 public class UserController {
 
     private final UserService userService;
@@ -25,6 +25,15 @@ public class UserController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<UserResponse>> getAllUsers() {
         return ResponseEntity.ok(userService.getAllUsers());
+    }
+
+    // GET /api/users/by-role?role=TECHNICIAN — all staff can fetch users by role (for dropdowns)
+    @GetMapping("/by-role")
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT_MAGASIN', 'TECHNICIAN', 'INFOLINE')")
+    public ResponseEntity<List<UserResponse>> getUsersByRole(@RequestParam String role) {
+        com.repairshop.repair_ticket_system.entity.Role r =
+                com.repairshop.repair_ticket_system.entity.Role.valueOf(role);
+        return ResponseEntity.ok(userService.getUsersByRole(r));
     }
 
     // GET /api/users/me — any logged-in user sees their own profile
@@ -45,6 +54,26 @@ public class UserController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserResponse> createUser(@RequestBody RegisterRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(userService.createUser(request));
+    }
+
+    // PATCH /api/users/me/password — logged-in user changes own password
+    @PatchMapping("/me/password")
+    public ResponseEntity<Void> changePassword(
+            Principal principal,
+            @RequestBody java.util.Map<String, String> body) {
+        userService.changePassword(principal.getName(), body.get("currentPassword"), body.get("newPassword"));
+        return ResponseEntity.ok().build();
+    }
+
+    // PATCH /api/users/{id}/role — admin updates a user's role
+    @PatchMapping("/{id}/role")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<UserResponse> updateUserRole(
+            @PathVariable Long id,
+            @RequestBody java.util.Map<String, String> body) {
+        com.repairshop.repair_ticket_system.entity.Role role =
+                com.repairshop.repair_ticket_system.entity.Role.valueOf(body.get("role"));
+        return ResponseEntity.ok(userService.updateUserRole(id, role));
     }
 
     // DELETE /api/users/{id} — admin only

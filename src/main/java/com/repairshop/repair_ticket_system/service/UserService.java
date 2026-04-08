@@ -2,11 +2,14 @@ package com.repairshop.repair_ticket_system.service;
 
 import com.repairshop.repair_ticket_system.dto.RegisterRequest;
 import com.repairshop.repair_ticket_system.dto.UserResponse;
+import com.repairshop.repair_ticket_system.entity.Ticket;
 import com.repairshop.repair_ticket_system.entity.User;
+import com.repairshop.repair_ticket_system.repository.TicketRepository;
 import com.repairshop.repair_ticket_system.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -15,6 +18,7 @@ import java.util.List;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final TicketRepository ticketRepository;
     private final PasswordEncoder passwordEncoder;
 
     // ─── Get all users (admin only) ────────────────────────────────────────────
@@ -56,11 +60,47 @@ public class UserService {
         return toResponse(userRepository.save(user));
     }
 
-    // ─── Delete user ───────────────────────────────────────────────────────────
-    public void deleteUser(Long id) {
-        if (!userRepository.existsById(id)) {
-            throw new RuntimeException("User not found with id: " + id);
+    // ─── Get users by role (e.g. all technicians) ─────────────────────────────
+    public List<UserResponse> getUsersByRole(com.repairshop.repair_ticket_system.entity.Role role) {
+        return userRepository.findByRole(role)
+                .stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
+    // ─── Change own password ───────────────────────────────────────────────────
+    public void changePassword(String email, String currentPassword, String newPassword) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+            throw new RuntimeException("Current password is incorrect");
         }
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+    }
+
+    // ─── Update user role ──────────────────────────────────────────────────────
+    public UserResponse updateUserRole(Long id, com.repairshop.repair_ticket_system.entity.Role role) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+        user.setRole(role);
+        return toResponse(userRepository.save(user));
+    }
+
+    // ─── Delete user ───────────────────────────────────────────────────────────
+    @Transactional
+    public void deleteUser(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+
+        // Nullify references in tickets before deleting
+        for (Ticket t : ticketRepository.findByAgentMagasin(user)) {
+            t.setAgentMagasin(null); ticketRepository.save(t);
+        }
+        for (Ticket t : ticketRepository.findByTechnician(user)) {
+            t.setTechnician(null); ticketRepository.save(t);
+        }
+
         userRepository.deleteById(id);
     }
 

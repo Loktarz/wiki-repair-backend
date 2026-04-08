@@ -1,5 +1,6 @@
 package com.repairshop.repair_ticket_system.dto;
 
+import com.repairshop.repair_ticket_system.entity.ClientType;
 import com.repairshop.repair_ticket_system.entity.TicketStatus;
 import lombok.Builder;
 import lombok.Data;
@@ -11,6 +12,7 @@ import java.time.LocalDateTime;
 public class TicketResponse {
 
     private Long id;
+    private String ticketNumber;    // e.g. WR-2025-000042
 
     // Product info
     private String productFamily;
@@ -35,13 +37,23 @@ public class TicketResponse {
     // Status
     private TicketStatus status;
 
-    // Actors — we expose names/emails only, not full User objects
-    private Long clientId;
+    // Client info (external person, not a system user)
+    private ClientType clientType;
     private String clientName;
+    private String clientPhone;
     private String clientEmail;
+    private String clientAddress;
+    private String clientCompany;
 
-    private Long clerkId;
-    private String clerkName;
+    // Diagnostic
+    private String diagnosticNotes;
+
+    // Actors
+    private Long agentMagasinId;
+    private String agentMagasinName;
+
+    private Long infolineId;
+    private String infolineName;
 
     private Long technicianId;
     private String technicianName;

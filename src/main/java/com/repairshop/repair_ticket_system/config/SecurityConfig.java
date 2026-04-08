@@ -41,8 +41,9 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .authorizeHttpRequests(auth -> auth
-                // Public routes — no token needed
-                .requestMatchers("/api/auth/**").permitAll()
+                // Only login is public — registration is admin-only via POST /api/users
+                .requestMatchers("/api/auth/login").permitAll()
+                .requestMatchers("/api/public/**").permitAll()
                 // Everything else requires a valid JWT
                 .anyRequest().authenticated()
             )
@@ -61,7 +62,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:3000")); // React dev server
+        config.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:5173", "http://localhost:5174")); // React dev servers
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);

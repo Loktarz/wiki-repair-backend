@@ -1,5 +1,6 @@
 package com.repairshop.repair_ticket_system.controller;
 
+import com.repairshop.repair_ticket_system.dto.StatusHistoryResponse;
 import com.repairshop.repair_ticket_system.dto.TicketRequest;
 import com.repairshop.repair_ticket_system.dto.TicketResponse;
 import com.repairshop.repair_ticket_system.dto.TicketStatusUpdateRequest;
@@ -16,14 +17,14 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/tickets")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:5173"})
 public class TicketController {
 
     private final TicketService ticketService;
 
-    // POST /api/tickets — clerk, admin, or client creates a ticket
+    // POST /api/tickets — agent magasin or admin creates a ticket
     @PostMapping
-    @PreAuthorize("hasAnyRole('CLERK', 'ADMIN', 'CLIENT')")
+    @PreAuthorize("hasAnyRole('AGENT_MAGASIN', 'ADMIN')")
     public ResponseEntity<TicketResponse> createTicket(
             @RequestBody TicketRequest request,
             Principal principal) {
@@ -31,33 +32,62 @@ public class TicketController {
                 .body(ticketService.createTicket(request, principal.getName()));
     }
 
-    // GET /api/tickets — all staff can see all tickets (not clients)
+    // GET /api/tickets — all staff can see all tickets
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'CLERK', 'TECHNICIAN', 'INFOLINE')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT_MAGASIN', 'TECHNICIAN', 'INFOLINE')")
     public ResponseEntity<List<TicketResponse>> getAllTickets() {
         return ResponseEntity.ok(ticketService.getAllTickets());
     }
 
-    // GET /api/tickets/my — client sees only their own tickets
-    @GetMapping("/my")
-    @PreAuthorize("hasRole('CLIENT')")
-    public ResponseEntity<List<TicketResponse>> getMyTickets(Principal principal) {
-        return ResponseEntity.ok(ticketService.getMyTickets(principal.getName()));
-    }
-
-    // GET /api/tickets/{id} — all authenticated users can view a single ticket
+    // GET /api/tickets/{id} — all authenticated staff can view a single ticket
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT_MAGASIN', 'TECHNICIAN', 'INFOLINE')")
     public ResponseEntity<TicketResponse> getTicketById(@PathVariable Long id) {
         return ResponseEntity.ok(ticketService.getTicketById(id));
     }
 
-    // PATCH /api/tickets/{id}/status — staff moves ticket through the workflow
+    // PATCH /api/tickets/{id}/status — each role can only set their allowed statuses
     @PatchMapping("/{id}/status")
-    @PreAuthorize("hasAnyRole('ADMIN', 'CLERK', 'TECHNICIAN', 'INFOLINE')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT_MAGASIN', 'TECHNICIAN', 'INFOLINE')")
     public ResponseEntity<TicketResponse> updateStatus(
             @PathVariable Long id,
-            @RequestBody TicketStatusUpdateRequest request) {
-        return ResponseEntity.ok(ticketService.updateStatus(id, request));
+            @RequestBody TicketStatusUpdateRequest request,
+            Principal principal) {
+        return ResponseEntity.ok(ticketService.updateStatus(id, request, principal.getName()));
+    }
+
+    // PATCH /api/tickets/{id} — update ticket fields (agent magasin edits client info, technician edits diagnostic)
+    @PatchMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT_MAGASIN', 'TECHNICIAN', 'INFOLINE')")
+    public ResponseEntity<TicketResponse> updateTicket(
+            @PathVariable Long id,
+            @RequestBody TicketRequest request) {
+        return ResponseEntity.ok(ticketService.updateTicket(id, request));
+    }
+
+    // PATCH /api/tickets/{id}/assign-technician — admin or agent magasin assigns a technician
+    @PatchMapping("/{id}/assign-technician")
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT_MAGASIN')")
+    public ResponseEntity<TicketResponse> assignTechnician(
+            @PathVariable Long id,
+            @RequestBody java.util.Map<String, Long> body) {
+        return ResponseEntity.ok(ticketService.assignTechnician(id, body.get("technicianId")));
+    }
+
+    // PATCH /api/tickets/{id}/assign-infoline — admin or agent magasin assigns an infoline agent
+    @PatchMapping("/{id}/assign-infoline")
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT_MAGASIN')")
+    public ResponseEntity<TicketResponse> assignInfoline(
+            @PathVariable Long id,
+            @RequestBody java.util.Map<String, Long> body) {
+        return ResponseEntity.ok(ticketService.assignInfoline(id, body.get("infolineId")));
+    }
+
+    // GET /api/tickets/{id}/history — all staff can view status history
+    @GetMapping("/{id}/history")
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT_MAGASIN', 'TECHNICIAN', 'INFOLINE')")
+    public ResponseEntity<List<StatusHistoryResponse>> getHistory(@PathVariable Long id) {
+        return ResponseEntity.ok(ticketService.getStatusHistory(id));
     }
 
     // DELETE /api/tickets/{id} — admin only

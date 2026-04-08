@@ -43,14 +43,30 @@ public class Ticket {
     @Column(nullable = false)
     private TicketStatus status;
 
+    // --- Ticket Number ---
+    @Column(unique = true)
+    private String ticketNumber;    // e.g. WR-2025-000042
+
+    // --- Client Info (external, not a system user) ---
+    @Enumerated(EnumType.STRING)
+    private ClientType clientType;  // PARTICULIER or ENTREPRISE
+    private String clientName;
+    private String clientPhone;
+    private String clientEmail;
+    private String clientAddress;
+    private String clientCompany;   // Filled if the client is a business (ENTREPRISE)
+
+    // --- Diagnostic ---
+    private String diagnosticNotes; // Technician's findings after diagnosis
+
     // --- Actors ---
     @ManyToOne
-    @JoinColumn(name = "client_id")
-    private User client;
+    @JoinColumn(name = "agent_magasin_id")
+    private User agentMagasin;
 
     @ManyToOne
-    @JoinColumn(name = "clerk_id")
-    private User clerk;
+    @JoinColumn(name = "infoline_id")
+    private User infoline;
 
     @ManyToOne
     @JoinColumn(name = "technician_id")

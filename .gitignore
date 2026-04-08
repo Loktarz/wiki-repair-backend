@@ -46,3 +46,6 @@ target/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Application secrets — DB password, JWT secret
+src/main/resources/application.properties
