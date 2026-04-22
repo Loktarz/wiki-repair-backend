@@ -22,29 +22,31 @@ public class PublicService {
 
     private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
+    // ─── Map Ticket → PublicTrackResponse ────────────────────────────────────
+    public PublicTrackResponse toPublicResponse(Ticket t) {
+        String phase       = resolvePhase(t.getStatus());
+        String phaseLabel  = resolvePhaseLabel(phase);
+        String statusLabel = resolveStatusLabel(t.getStatus());
+        return PublicTrackResponse.builder()
+                .ticketNumber(t.getTicketNumber())
+                .clientName(maskName(t.getClientName()))
+                .productType(t.getProductType())
+                .brand(t.getBrand())
+                .serviceType(t.getServiceType())
+                .status(t.getStatus() != null ? t.getStatus().name() : null)
+                .phase(phase)
+                .phaseLabel(phaseLabel)
+                .statusLabel(statusLabel)
+                .createdAt(t.getCreatedAt() != null ? t.getCreatedAt().format(FMT) : null)
+                .updatedAt(t.getUpdatedAt() != null ? t.getUpdatedAt().format(FMT) : null)
+                .build();
+    }
+
     // ─── Track tickets by phone number ────────────────────────────────────────
     public List<PublicTrackResponse> trackByPhone(String phone) {
-        List<com.repairshop.repair_ticket_system.entity.Ticket> tickets =
-                ticketRepository.findByClientPhoneContaining(phone);
+        List<Ticket> tickets = ticketRepository.findByClientPhoneContaining(phone);
         if (tickets.isEmpty()) throw new RuntimeException("Aucun ticket trouvé pour ce numéro de téléphone.");
-        return tickets.stream().map(t -> {
-            String phase      = resolvePhase(t.getStatus());
-            String phaseLabel = resolvePhaseLabel(phase);
-            String statusLabel = resolveStatusLabel(t.getStatus());
-            return PublicTrackResponse.builder()
-                    .ticketNumber(t.getTicketNumber())
-                    .clientName(maskName(t.getClientName()))
-                    .productType(t.getProductType())
-                    .brand(t.getBrand())
-                    .serviceType(t.getServiceType())
-                    .status(t.getStatus() != null ? t.getStatus().name() : null)
-                    .phase(phase)
-                    .phaseLabel(phaseLabel)
-                    .statusLabel(statusLabel)
-                    .createdAt(t.getCreatedAt() != null ? t.getCreatedAt().format(FMT) : null)
-                    .updatedAt(t.getUpdatedAt() != null ? t.getUpdatedAt().format(FMT) : null)
-                    .build();
-        }).toList();
+        return tickets.stream().map(this::toPublicResponse).toList();
     }
 
     // ─── Track ticket by number ────────────────────────────────────────────────

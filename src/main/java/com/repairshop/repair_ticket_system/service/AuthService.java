@@ -26,7 +26,7 @@ public class AuthService {
     public AuthResponse register(RegisterRequest request) {
         // Check if email already exists
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email already in use: " + request.getEmail());
+            throw new IllegalStateException("Email already in use: " + request.getEmail());
         }
 
         // Build and save the new user

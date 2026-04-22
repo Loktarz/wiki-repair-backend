@@ -2,7 +2,9 @@ package com.repairshop.repair_ticket_system.service;
 
 import com.repairshop.repair_ticket_system.dto.RegisterRequest;
 import com.repairshop.repair_ticket_system.dto.UserResponse;
+import com.repairshop.repair_ticket_system.dto.UserUpdateRequest;
 import com.repairshop.repair_ticket_system.entity.Ticket;
+import com.repairshop.repair_ticket_system.entity.Role;
 import com.repairshop.repair_ticket_system.entity.User;
 import com.repairshop.repair_ticket_system.repository.TicketRepository;
 import com.repairshop.repair_ticket_system.repository.UserRepository;
@@ -21,10 +23,11 @@ public class UserService {
     private final TicketRepository ticketRepository;
     private final PasswordEncoder passwordEncoder;
 
-    // ─── Get all users (admin only) ────────────────────────────────────────────
+    // ─── Get all users (admin only) — excludes CLIENT role ────────────────────
     public List<UserResponse> getAllUsers() {
         return userRepository.findAll()
                 .stream()
+                .filter(u -> u.getRole() != Role.CLIENT)
                 .map(this::toResponse)
                 .toList();
     }
@@ -66,6 +69,19 @@ public class UserService {
                 .stream()
                 .map(this::toResponse)
                 .toList();
+    }
+
+    // ─── Update own profile (name + phone) ────────────────────────────────────
+    public UserResponse updateCurrentUser(String email, UserUpdateRequest request) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        if (request.getFullName() != null && !request.getFullName().isBlank()) {
+            user.setFullName(request.getFullName());
+        }
+        if (request.getPhone() != null) {
+            user.setPhone(request.getPhone());
+        }
+        return toResponse(userRepository.save(user));
     }
 
     // ─── Change own password ───────────────────────────────────────────────────

@@ -5,6 +5,7 @@ import com.repairshop.repair_ticket_system.dto.TicketRequest;
 import com.repairshop.repair_ticket_system.dto.TicketResponse;
 import com.repairshop.repair_ticket_system.dto.TicketStatusUpdateRequest;
 import com.repairshop.repair_ticket_system.service.TicketService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 import java.util.List;
+import org.springframework.data.domain.Page;
 
 @RestController
 @RequestMapping("/api/tickets")
@@ -26,17 +28,22 @@ public class TicketController {
     @PostMapping
     @PreAuthorize("hasAnyRole('AGENT_MAGASIN', 'ADMIN')")
     public ResponseEntity<TicketResponse> createTicket(
-            @RequestBody TicketRequest request,
+            @Valid @RequestBody TicketRequest request,
             Principal principal) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ticketService.createTicket(request, principal.getName()));
     }
 
-    // GET /api/tickets — all staff can see all tickets
+    // GET /api/tickets — all staff can see all tickets (paginated)
+    // ?page=0&size=10&search=ahmed&status=EN_DIAGNOSTIC
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'AGENT_MAGASIN', 'TECHNICIAN', 'INFOLINE')")
-    public ResponseEntity<List<TicketResponse>> getAllTickets() {
-        return ResponseEntity.ok(ticketService.getAllTickets());
+    public ResponseEntity<Page<TicketResponse>> getAllTickets(
+            @RequestParam(defaultValue = "0")  int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false)    String search,
+            @RequestParam(required = false)    String status) {
+        return ResponseEntity.ok(ticketService.getTicketsPaginated(page, size, search, status));
     }
 
     // GET /api/tickets/{id} — all authenticated staff can view a single ticket
@@ -61,7 +68,7 @@ public class TicketController {
     @PreAuthorize("hasAnyRole('ADMIN', 'AGENT_MAGASIN', 'TECHNICIAN', 'INFOLINE')")
     public ResponseEntity<TicketResponse> updateTicket(
             @PathVariable Long id,
-            @RequestBody TicketRequest request) {
+            @Valid @RequestBody TicketRequest request) {
         return ResponseEntity.ok(ticketService.updateTicket(id, request));
     }
 

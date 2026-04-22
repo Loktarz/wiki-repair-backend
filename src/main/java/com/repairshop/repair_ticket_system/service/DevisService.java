@@ -27,6 +27,7 @@ public class DevisService {
     private final DevisLigneRepository devisLigneRepository;
     private final TicketRepository     ticketRepository;
     private final UserRepository       userRepository;
+    private final EmailService         emailService;
 
     // ─── Create Devis ──────────────────────────────────────────────────────────
 
@@ -58,7 +59,12 @@ public class DevisService {
 
         // Recalculate totals and persist
         devis.recalculate();
-        return toResponse(devisRepository.save(devis));
+        DevisResponse response = toResponse(devisRepository.save(devis));
+
+        // Notify client by email with devis summary (async)
+        emailService.sendDevisEmail(ticket, devis.getTotalPiecesHT(), devis.getTva(), devis.getMontantTotal());
+
+        return response;
     }
 
     // ─── Update Devis ──────────────────────────────────────────────────────────

@@ -1,29 +1,17 @@
 package com.repairshop.repair_ticket_system.dto;
 
-import com.repairshop.repair_ticket_system.entity.Role;
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 @Data
-public class RegisterRequest {
+public class UserUpdateRequest {
 
     @NotBlank(message = "Le nom est obligatoire")
     @Size(max = 100, message = "Le nom ne peut pas dépasser 100 caractères")
     private String fullName;
 
-    @NotBlank(message = "L'email est obligatoire")
-    @Email(message = "Format d'email invalide")
-    private String email;
-
-    @NotBlank(message = "Le mot de passe est obligatoire")
-    @Size(min = 6, max = 100, message = "Le mot de passe doit contenir au moins 6 caractères")
-    private String password;
-
     @Pattern(regexp = "^$|^(\\+216\\s?)?[0-9]{8}$", message = "Numéro de téléphone invalide (8 chiffres requis)")
     private String phone;
-
-    private Role role;
 }

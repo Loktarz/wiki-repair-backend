@@ -21,6 +21,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +33,7 @@ public class TicketService {
     private final TicketRepository ticketRepository;
     private final UserRepository userRepository;
     private final StatusHistoryRepository statusHistoryRepository;
+    private final EmailService emailService;
     private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
     // ─── Create Ticket ─────────────────────────────────────────────────────────
@@ -67,13 +72,29 @@ public class TicketService {
         return toResponse(ticketRepository.save(ticket));
     }
 
-    // ─── Get All Tickets ────────────────────────────────────────────────────────
+    // ─── Get All Tickets (legacy — kept for internal use) ───────────────────────
 
     public List<TicketResponse> getAllTickets() {
-        return ticketRepository.findAll()
+        return ticketRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"))
                 .stream()
                 .map(this::toResponse)
                 .toList();
+    }
+
+    // ─── Get Tickets Paginated + Filtered ──────────────────────────────────────
+
+    public Page<TicketResponse> getTicketsPaginated(int page, int size, String search, String status) {
+        // Normalize empty strings to null so the JPQL :param IS NULL check works
+        String searchParam  = (search != null && !search.isBlank())  ? search.trim()  : null;
+        TicketStatus statusParam = null;
+        if (status != null && !status.isBlank()) {
+            try { statusParam = TicketStatus.valueOf(status.trim()); }
+            catch (IllegalArgumentException ignored) {}
+        }
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        return ticketRepository.findAllFiltered(searchParam, statusParam, pageable)
+                .map(this::toResponse);
     }
 
     // ─── Get Ticket By ID ───────────────────────────────────────────────────────
@@ -107,6 +128,9 @@ public class TicketService {
                 .changedByName(actor.getFullName())
                 .changedByRole(actor.getRole().name())
                 .build());
+
+        // Notify client by email (async — never blocks the response)
+        emailService.sendStatusChangeEmail(ticket, request.getStatus());
 
         return toResponse(ticket);
     }

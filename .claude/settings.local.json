@@ -16,7 +16,27 @@
       "Bash(npx tailwindcss:*)",
       "WebFetch(domain:gsm-guide.tn)",
       "Bash(git -C \"C:/Users/yassi/OneDrive/Bureau/repair-ticket-system - Copy\" remote -v)",
-      "Bash(git -C \"C:/Users/yassi/OneDrive/Bureau/repair-ticket-system - Copy\" log --oneline)"
+      "Bash(git -C \"C:/Users/yassi/OneDrive/Bureau/repair-ticket-system - Copy\" log --oneline)",
+      "Bash(node -e ':*)",
+      "Bash(powershell -command \"Expand-Archive -Path '403979320136__1_ \\(1\\).zip' -DestinationPath '.\\\\zip_inspect' -Force 2>&1 | head -5; ls '.\\\\zip_inspect'\")",
+      "Bash(powershell -command \"ls 'C:\\\\Users\\\\yassi\\\\OneDrive\\\\Bureau\\\\zip_inspect\\\\Chapitres\\\\'\")",
+      "Bash(powershell -command \"Compress-Archive -Path 'C:\\\\Users\\\\yassi\\\\OneDrive\\\\Bureau\\\\zip_inspect\\\\*' -DestinationPath 'C:\\\\Users\\\\yassi\\\\OneDrive\\\\Bureau\\\\thesis_fixed.zip' -Force; Write-Host 'Done'\")",
+      "Bash(powershell -command \"Get-ChildItem -Path 'C:\\\\Users\\\\yassi\\\\OneDrive\\\\Bureau' -Filter '*.pdf' -Recurse -ErrorAction SilentlyContinue | Select-Object FullName, LastWriteTime, Length | Sort-Object LastWriteTime -Descending | head -20\")",
+      "Bash(python3 -c ':*)",
+      "Bash(py --version)",
+      "Bash(py -c \"import pdfplumber; print\\('ok'\\)\")",
+      "Bash(python -c \"import pdfplumber; print\\('ok'\\)\")",
+      "Bash(python3 -c \"import pdfplumber; print\\('ok'\\)\")",
+      "Bash(where py:*)",
+      "Bash(where python:*)",
+      "Read(//c/Users/yassi/AppData/Local/Programs/**)",
+      "Bash(ls /c/Python*)",
+      "Bash(/c/Python314/python.exe -c \"import pdfplumber; print\\('ok'\\)\")",
+      "Bash(/c/Python314/python.exe -m pip install pdfplumber)",
+      "Bash(/c/Python314/python.exe -c ':*)",
+      "Bash(iconv -f utf-8 -t utf-8)",
+      "Bash(dir \"C:\\\\Users\\\\yassi\\\\OneDrive\\\\Bureau\\\\repair-ticket-system - Copy\" /B)",
+      "Bash(unzip -o \"thesis_fixed 1.zip\" -d thesis_fixed_new)"
     ]
   }
 }

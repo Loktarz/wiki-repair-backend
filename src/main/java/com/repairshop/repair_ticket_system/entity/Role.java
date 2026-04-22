@@ -4,5 +4,6 @@ public enum Role {
     ADMIN,
     AGENT_MAGASIN, // Agent magasin
     TECHNICIAN,    // Agent technicien
-    INFOLINE       // Agent infoline
+    INFOLINE,      // Agent infoline
+    CLIENT         // Client self-registered via frontend
 }

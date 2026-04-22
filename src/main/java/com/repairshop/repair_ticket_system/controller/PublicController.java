@@ -5,6 +5,7 @@ import com.repairshop.repair_ticket_system.dto.PublicTrackResponse;
 import com.repairshop.repair_ticket_system.dto.TicketResponse;
 import java.util.List;
 import com.repairshop.repair_ticket_system.service.PublicService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -32,7 +33,7 @@ public class PublicController {
 
     // POST /api/public/demande — client submits a repair request online
     @PostMapping("/demande")
-    public ResponseEntity<TicketResponse> submitDemande(@RequestBody PublicDemandeRequest request) {
+    public ResponseEntity<TicketResponse> submitDemande(@Valid @RequestBody PublicDemandeRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(publicService.submitDemande(request));
     }

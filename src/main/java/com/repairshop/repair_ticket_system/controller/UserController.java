@@ -2,7 +2,9 @@ package com.repairshop.repair_ticket_system.controller;
 
 import com.repairshop.repair_ticket_system.dto.RegisterRequest;
 import com.repairshop.repair_ticket_system.dto.UserResponse;
+import com.repairshop.repair_ticket_system.dto.UserUpdateRequest;
 import com.repairshop.repair_ticket_system.service.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,7 +17,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
-@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:5173"})
+@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:5173", "http://localhost:5174"})
 public class UserController {
 
     private final UserService userService;
@@ -52,8 +54,16 @@ public class UserController {
     // POST /api/users — admin creates a new user (clerk, technician, infoline)
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<UserResponse> createUser(@RequestBody RegisterRequest request) {
+    public ResponseEntity<UserResponse> createUser(@Valid @RequestBody RegisterRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(userService.createUser(request));
+    }
+
+    // PUT /api/users/me — logged-in user updates own name/phone
+    @PutMapping("/me")
+    public ResponseEntity<UserResponse> updateCurrentUser(
+            Principal principal,
+            @Valid @RequestBody UserUpdateRequest request) {
+        return ResponseEntity.ok(userService.updateCurrentUser(principal.getName(), request));
     }
 
     // PATCH /api/users/me/password — logged-in user changes own password

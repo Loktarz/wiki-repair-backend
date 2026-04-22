@@ -22,7 +22,10 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
+import org.springframework.beans.factory.annotation.Value;
 
 @Configuration
 @EnableWebSecurity
@@ -33,6 +36,11 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final UserDetailsServiceImpl userDetailsService;
 
+    // Read allowed origins from env variable — comma-separated list
+    // Falls back to localhost dev servers if not set
+    @Value("${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173,http://localhost:5174}")
+    private String allowedOriginsRaw;
+
     // ─── Security Filter Chain ─────────────────────────────────────────────────
 
     @Bean
@@ -42,7 +50,7 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .authorizeHttpRequests(auth -> auth
                 // Only login is public — registration is admin-only via POST /api/users
-                .requestMatchers("/api/auth/login").permitAll()
+                .requestMatchers("/api/auth/login", "/api/auth/register").permitAll()
                 .requestMatchers("/api/public/**").permitAll()
                 // Everything else requires a valid JWT
                 .anyRequest().authenticated()
@@ -57,12 +65,18 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // ─── CORS (allow React dev server) ────────────────────────────────────────
+    // ─── CORS ─────────────────────────────────────────────────────────────────
+    // Reads from CORS_ALLOWED_ORIGINS env variable (comma-separated)
+    // e.g. "https://wiki-repair.vercel.app,https://wiki-repair-backoffice.vercel.app"
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
+        List<String> origins = Arrays.stream(allowedOriginsRaw.split(","))
+                .map(String::trim)
+                .collect(Collectors.toList());
+
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:5173", "http://localhost:5174")); // React dev servers
+        config.setAllowedOrigins(origins);
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
