@@ -83,7 +83,7 @@ public class TicketService {
 
     // ─── Get Tickets Paginated + Filtered ──────────────────────────────────────
 
-    public Page<TicketResponse> getTicketsPaginated(int page, int size, String search, String status) {
+    public Page<TicketResponse> getTicketsPaginated(int page, int size, String search, String status, Boolean archived) {
         // Normalize empty strings to null so the JPQL :param IS NULL check works
         String searchParam  = (search != null && !search.isBlank())  ? search.trim()  : null;
         TicketStatus statusParam = null;
@@ -92,8 +92,11 @@ public class TicketService {
             catch (IllegalArgumentException ignored) {}
         }
 
+        // Default: only active tickets (archived = false). Pass archived=true for archives, null for both.
+        Boolean archivedParam = archived;
+
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        return ticketRepository.findAllFiltered(searchParam, statusParam, pageable)
+        return ticketRepository.findAllFiltered(searchParam, statusParam, archivedParam, pageable)
                 .map(this::toResponse);
     }
 
@@ -118,6 +121,17 @@ public class TicketService {
 
         TicketStatus oldStatus = ticket.getStatus();
         ticket.setStatus(request.getStatus());
+
+        // Track pickup readiness for auto-relance scheduler
+        if (request.getStatus() == TicketStatus.PRET_RETRAIT && ticket.getPretRetraitAt() == null) {
+            ticket.setPretRetraitAt(LocalDateTime.now());
+        }
+
+        // Auto-archive once delivered
+        if (request.getStatus() == TicketStatus.LIVRE_CLIENT) {
+            ticket.setArchived(true);
+        }
+
         ticketRepository.save(ticket);
 
         // Log the status change
@@ -133,6 +147,33 @@ public class TicketService {
         emailService.sendStatusChangeEmail(ticket, request.getStatus());
 
         return toResponse(ticket);
+    }
+
+    // ─── Tentative de réparation: outcome routing ─────────────────────────────
+    /**
+     * Records the outcome of a partial-repair attempt.
+     * success=true  → REPARATION_TERMINEE
+     * success=false → REPARATION_IMPOSSIBLE
+     * Notes are appended to diagnosticNotes for traceability.
+     */
+    public TicketResponse recordTentativeOutcome(Long id, boolean success, String notes, String actorEmail) {
+        Ticket ticket = ticketRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Ticket not found with id: " + id));
+        if (ticket.getStatus() != TicketStatus.TENTATIVE_REPARATION) {
+            throw new RuntimeException("Le ticket n'est pas en TENTATIVE_REPARATION (statut actuel: " + ticket.getStatus() + ")");
+        }
+
+        // Append notes
+        if (notes != null && !notes.isBlank()) {
+            String prefix = success ? "[Tentative réussie] " : "[Tentative échouée] ";
+            String existing = ticket.getDiagnosticNotes() == null ? "" : ticket.getDiagnosticNotes() + "\n";
+            ticket.setDiagnosticNotes(existing + prefix + notes);
+            ticketRepository.save(ticket);
+        }
+
+        TicketStatusUpdateRequest req = new TicketStatusUpdateRequest();
+        req.setStatus(success ? TicketStatus.REPARATION_TERMINEE : TicketStatus.REPARATION_IMPOSSIBLE);
+        return updateStatus(id, req, actorEmail);
     }
 
     // ─── Generate Ticket Number ────────────────────────────────────────────────
@@ -350,6 +391,12 @@ public class TicketService {
                 // Technician info
                 .technicianId(ticket.getTechnician() != null ? ticket.getTechnician().getId() : null)
                 .technicianName(ticket.getTechnician() != null ? ticket.getTechnician().getFullName() : null)
+                // Bon de Réception
+                .bonNumber(ticket.getBonNumber())
+                .signedBonPath(ticket.getSignedBonPath())
+                .bonGeneratedAt(ticket.getBonGeneratedAt())
+                .signedBonUploadedAt(ticket.getSignedBonUploadedAt())
+                .archived(ticket.getArchived())
                 .createdAt(ticket.getCreatedAt())
                 .updatedAt(ticket.getUpdatedAt())
                 .build();

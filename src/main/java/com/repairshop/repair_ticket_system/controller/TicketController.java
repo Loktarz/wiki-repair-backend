@@ -35,15 +35,17 @@ public class TicketController {
     }
 
     // GET /api/tickets — all staff can see all tickets (paginated)
-    // ?page=0&size=10&search=ahmed&status=EN_DIAGNOSTIC
+    // ?page=0&size=10&search=ahmed&status=EN_DIAGNOSTIC&archived=false
+    // archived defaults to false (active tickets only). Pass archived=true for the archive view.
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'AGENT_MAGASIN', 'TECHNICIAN', 'INFOLINE')")
     public ResponseEntity<Page<TicketResponse>> getAllTickets(
             @RequestParam(defaultValue = "0")  int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false)    String search,
-            @RequestParam(required = false)    String status) {
-        return ResponseEntity.ok(ticketService.getTicketsPaginated(page, size, search, status));
+            @RequestParam(required = false)    String status,
+            @RequestParam(required = false, defaultValue = "false") Boolean archived) {
+        return ResponseEntity.ok(ticketService.getTicketsPaginated(page, size, search, status, archived));
     }
 
     // GET /api/tickets/{id} — all authenticated staff can view a single ticket
@@ -88,6 +90,18 @@ public class TicketController {
             @PathVariable Long id,
             @RequestBody java.util.Map<String, Long> body) {
         return ResponseEntity.ok(ticketService.assignInfoline(id, body.get("infolineId")));
+    }
+
+    // POST /api/tickets/{id}/tentative-outcome — technician records partial-repair outcome
+    @PostMapping("/{id}/tentative-outcome")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TECHNICIAN')")
+    public ResponseEntity<TicketResponse> recordTentativeOutcome(
+            @PathVariable Long id,
+            @RequestBody java.util.Map<String, Object> body,
+            Principal principal) {
+        boolean success = Boolean.TRUE.equals(body.get("success"));
+        String notes = body.get("notes") != null ? body.get("notes").toString() : null;
+        return ResponseEntity.ok(ticketService.recordTentativeOutcome(id, success, notes, principal.getName()));
     }
 
     // GET /api/tickets/{id}/history — all staff can view status history

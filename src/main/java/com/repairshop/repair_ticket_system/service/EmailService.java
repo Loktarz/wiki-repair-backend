@@ -53,6 +53,45 @@ public class EmailService {
         }
     }
 
+    // ─── Pickup reminder (relance) ────────────────────────────────────────────
+
+    @Async
+    public void sendPickupReminderEmail(Ticket ticket) {
+        if (ticket.getClientEmail() == null || ticket.getClientEmail().isBlank()) return;
+
+        try {
+            String subject = "Wiki Repair — Rappel : votre appareil vous attend · " + ticket.getTicketNumber();
+            String body = """
+                <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#f5f5f5;padding:30px">
+                  <div style="background:#1d6b2e;border-radius:10px 10px 0 0;padding:24px;text-align:center">
+                    <span style="background:#3ab54a;color:white;font-weight:900;font-size:18px;padding:6px 12px;border-radius:4px 0 0 4px">WIKI</span><span style="background:#1d6b2e;color:white;font-weight:900;font-size:18px;padding:6px 12px;border:2px solid #3ab54a;border-radius:0 4px 4px 0">Repair</span>
+                  </div>
+                  <div style="background:white;padding:32px;border-radius:0 0 10px 10px;border:1px solid #e0e0e0">
+                    <p style="color:#555;font-size:15px">Bonjour <strong>%s</strong>,</p>
+                    <p style="color:#555;font-size:15px">
+                      Petit rappel : votre appareil <strong>%s</strong> est prêt pour le retrait depuis plusieurs jours dans notre magasin.
+                    </p>
+                    <p style="color:#555;font-size:14px">Merci de bien vouloir passer le récupérer dès que possible.</p>
+                    <p style="color:#888;font-size:13px;margin-top:20px">
+                      Numéro de ticket : <strong>%s</strong><br>
+                      Pour toute question, contactez notre équipe.
+                    </p>
+                    <p style="font-size:13px;color:#888;margin-top:24px"><strong style="color:#1d6b2e">Wiki Repair</strong></p>
+                  </div>
+                </div>
+                """.formatted(
+                    ticket.getClientName(),
+                    (ticket.getBrand() != null ? ticket.getBrand() + " " : "") +
+                            (ticket.getDesignation() != null ? ticket.getDesignation() : ticket.getProductType()),
+                    ticket.getTicketNumber()
+            );
+            send(ticket.getClientEmail(), subject, body);
+            log.info("Pickup reminder sent to {} for ticket {}", ticket.getClientEmail(), ticket.getTicketNumber());
+        } catch (Exception e) {
+            log.error("Failed to send pickup reminder for ticket {}: {}", ticket.getTicketNumber(), e.getMessage());
+        }
+    }
+
     // ─── Internal send ────────────────────────────────────────────────────────
 
     private void send(String to, String subject, String htmlBody) throws Exception {

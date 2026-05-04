@@ -58,6 +58,15 @@ public class TicketResponse {
     private Long technicianId;
     private String technicianName;
 
+    // Bon de Réception
+    private String bonNumber;            // 6-digit unique number on PDF (null until generated)
+    private String signedBonPath;        // Relative path to signed scan (null until uploaded)
+    private LocalDateTime bonGeneratedAt;
+    private LocalDateTime signedBonUploadedAt;
+
+    // Archive flag
+    private Boolean archived;
+
     // Timestamps
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

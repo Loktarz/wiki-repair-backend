@@ -47,6 +47,22 @@ public class Ticket {
     @Column(unique = true)
     private String ticketNumber;    // e.g. WR-2025-000042
 
+    // --- Bon de Réception ---
+    @Column(unique = true)
+    private String bonNumber;        // e.g. 708941 (6-digit unique number printed on PDF)
+    private String signedBonPath;    // Filesystem path to scanned signed PDF (null until uploaded)
+    private java.time.LocalDateTime bonGeneratedAt;
+    private java.time.LocalDateTime signedBonUploadedAt;
+
+    // --- Archive flag (set when ticket fully closed) ---
+    @Builder.Default
+    @Column(nullable = false)
+    private Boolean archived = false;
+
+    // --- Pickup reminder tracking (for PRET_RETRAIT auto-relance) ---
+    private java.time.LocalDateTime pretRetraitAt;       // Set when status moves to PRET_RETRAIT
+    private java.time.LocalDateTime lastPickupRelanceAt; // Last reminder email sent
+
     // --- Client Info (external, not a system user) ---
     @Enumerated(EnumType.STRING)
     private ClientType clientType;  // PARTICULIER or ENTREPRISE

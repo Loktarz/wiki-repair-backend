@@ -28,7 +28,7 @@ public class JwtService {
         return Jwts.builder()
                 .subject(userDetails.getUsername())           // email
                 .claim("role", userDetails.getAuthorities()
-                        .iterator().next().getAuthority())    // e.g. ROLE_CLERK
+                        .iterator().next().getAuthority())    // e.g. ROLE_ADMIN
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + jwtExpiration))
                 .signWith(getSigningKey())
